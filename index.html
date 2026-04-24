@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เครื่องคำนวณเงินเกษียณ</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #E8C96A;
+    --gold-pale: #F5E9C5;
+    --deep: #1A1208;
+    --dark: #2D1F0A;
+    --mid: #5C4020;
+    --surface: #FDF8EE;
+    --surface2: #F5EDD5;
+    --text: #2D1F0A;
+    --text-muted: #8C6A3A;
+    --accent: #8B2500;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Sarabun', sans-serif;
+    background: var(--surface);
+    color: var(--text);
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse at 10% 20%, rgba(201,168,76,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 90% 80%, rgba(139,37,0,0.05) 0%, transparent 60%);
+  }
+
+  /* HEADER */
+  header {
+    text-align: center;
+    padding: 56px 24px 40px;
+    position: relative;
+  }
+  header::after {
+    content: '';
+    display: block;
+    width: 80px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin: 24px auto 0;
+  }
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(32px, 5vw, 52px);
+    font-weight: 900;
+    color: var(--deep);
+    line-height: 1.1;
+  }
+  .subtitle {
+    font-size: 15px;
+    color: var(--text-muted);
+    margin-top: 10px;
+    font-weight: 400;
+  }
+
+  /* LAYOUT */
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 20px 80px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  @media (max-width: 640px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+
+  /* CARD */
+  .card {
+    background: #fff;
+    border: 1px solid rgba(201,168,76,0.25);
+    border-radius: 20px;
+    padding: 32px;
+    box-shadow: 0 4px 40px rgba(45,31,10,0.06);
+  }
+  .card-title {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 700;
+    margin-bottom: 24px;
+  }
+
+  /* FORM */
+  .field {
+    margin-bottom: 20px;
+  }
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--mid);
+    margin-bottom: 6px;
+    letter-spacing: 0.3px;
+  }
+  .input-wrap {
+    position: relative;
+  }
+  .input-wrap .unit {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    color: var(--text-muted);
+    pointer-events: none;
+  }
+  input[type="number"], select {
+    width: 100%;
+    padding: 12px 48px 12px 14px;
+    border: 1.5px solid rgba(201,168,76,0.3);
+    border-radius: 10px;
+    font-size: 15px;
+    font-family: 'Sarabun', sans-serif;
+    color: var(--text);
+    background: var(--surface);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    -moz-appearance: textfield;
+  }
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  input:focus, select:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.12);
+    background: #fff;
+  }
+
+  /* SLIDER */
+  .slider-field { margin-bottom: 20px; }
+  .slider-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .slider-value {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--gold);
+    background: var(--gold-pale);
+    padding: 2px 10px;
+    border-radius: 20px;
+  }
+  input[type="range"] {
+    width: 100%;
+    height: 4px;
+    appearance: none;
+    background: linear-gradient(90deg, var(--gold) var(--pct,50%), rgba(201,168,76,0.2) var(--pct,50%));
+    border-radius: 4px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: var(--gold);
+    border-radius: 50%;
+    border: 3px solid #fff;
+    box-shadow: 0 2px 8px rgba(201,168,76,0.4);
+  }
+
+  /* BUTTON */
+  .btn {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, var(--gold) 0%, #A87830 100%);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Sarabun', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    margin-top: 8px;
+    box-shadow: 0 4px 20px rgba(201,168,76,0.3);
+  }
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(201,168,76,0.4);
+  }
+  .btn:active { transform: translateY(0); }
+
+  /* RESULTS */
+  #results {
+    display: none;
+    margin-top: 24px;
+  }
+  .results-header {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .results-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    color: var(--deep);
+  }
+  .metric-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 400px) { .metric-grid { grid-template-columns: 1fr; } }
+
+  .metric {
+    background: var(--surface2);
+    border-radius: 14px;
+    padding: 18px;
+    text-align: center;
+    border: 1px solid rgba(201,168,76,0.15);
+  }
+  .metric.highlight {
+    background: linear-gradient(135deg, var(--deep) 0%, #3D2A0F 100%);
+    border-color: var(--gold);
+    grid-column: 1 / -1;
+  }
+  .metric-label {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+  .metric.highlight .metric-label { color: rgba(255,255,255,0.5); }
+  .metric-value {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--deep);
+  }
+  .metric.highlight .metric-value {
+    color: var(--gold-light);
+    font-size: 30px;
+  }
+  .metric-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 3px;
+  }
+  .metric.highlight .metric-sub { color: rgba(255,255,255,0.4); }
+
+  /* PROGRESS BAR */
+  .progress-section { margin-top: 20px; }
+  .progress-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--mid);
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .progress-bar {
+    height: 8px;
+    background: rgba(201,168,76,0.15);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 8px;
+    transition: width 1s cubic-bezier(0.4,0,0.2,1);
+    width: 0%;
+  }
+  .fill-gold { background: linear-gradient(90deg, var(--gold), var(--gold-light)); }
+  .fill-green { background: linear-gradient(90deg, #2D7A4F, #4CAF82); }
+  .fill-red { background: linear-gradient(90deg, var(--accent), #D44); }
+
+  /* ADVICE */
+  .advice-box {
+    margin-top: 18px;
+    padding: 16px 18px;
+    border-radius: 12px;
+    font-size: 13px;
+    line-height: 1.6;
+    border-left: 3px solid var(--gold);
+    background: var(--gold-pale);
+    color: var(--mid);
+  }
+  .advice-box.warning {
+    border-color: var(--accent);
+    background: #FFF0EB;
+    color: #7A1500;
+  }
+
+  /* DIVIDER */
+  .section-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 28px 0 20px;
+    color: var(--gold);
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .section-divider::before, .section-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(201,168,76,0.25);
+  }
+
+  /* BADGE */
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-top: 6px;
+  }
+  .badge-ok { background: #E6F7EE; color: #1A6B3E; }
+  .badge-warn { background: #FFF3E0; color: #B35A00; }
+  .badge-bad { background: #FDEEEE; color: #B00020; }
+
+  .footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 11px;
+    color: var(--text-muted);
+    opacity: 0.6;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <p class="eyebrow">วางแผนการเงิน</p>
+  <h1>เครื่องคำนวณเงินเกษียณ</h1>
+  <p class="subtitle">คำนวณเงินที่ต้องออมเพื่ออนาคตที่มั่นคงของคุณ</p>
+</header>
+
+<div class="container">
+  <div class="grid">
+    <!-- INPUT PANEL -->
+    <div class="card">
+      <p class="card-title">ข้อมูลส่วนตัว</p>
+
+      <div class="field">
+        <label>อายุปัจจุบัน</label>
+        <div class="input-wrap">
+          <input type="number" id="currentAge" value="30" min="18" max="80">
+          <span class="unit">ปี</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>อายุที่ต้องการเกษียณ</label>
+        <div class="input-wrap">
+          <input type="number" id="retireAge" value="60" min="40" max="80">
+          <span class="unit">ปี</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>คาดการณ์อายุขัย</label>
+        <div class="input-wrap">
+          <input type="number" id="lifeExpect" value="85" min="60" max="100">
+          <span class="unit">ปี</span>
+        </div>
+      </div>
+
+      <div class="section-divider">การเงิน</div>
+
+      <div class="field">
+        <label>ค่าใช้จ่ายหลังเกษียณ (ต่อเดือน)</label>
+        <div class="input-wrap">
+          <input type="number" id="monthlyExpense" value="30000" min="1000">
+          <span class="unit">บาท</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>เงินออมที่มีอยู่แล้วปัจจุบัน</label>
+        <div class="input-wrap">
+          <input type="number" id="currentSaving" value="0" min="0">
+          <span class="unit">บาท</span>
+        </div>
+      </div>
+
+      <div class="slider-field">
+        <div class="slider-label-row">
+          <label style="margin:0">ผลตอบแทนการลงทุน (ต่อปี)</label>
+          <span class="slider-value" id="returnVal">5%</span>
+        </div>
+        <input type="range" id="returnRate" min="1" max="15" value="5" step="0.5"
+          oninput="updateSlider(this,'returnVal','%')">
+      </div>
+
+      <div class="slider-field">
+        <div class="slider-label-row">
+          <label style="margin:0">อัตราเงินเฟ้อ (ต่อปี)</label>
+          <span class="slider-value" id="inflationVal">3%</span>
+        </div>
+        <input type="range" id="inflationRate" min="0" max="10" value="3" step="0.5"
+          oninput="updateSlider(this,'inflationVal','%')">
+      </div>
+
+      <button class="btn" onclick="calculate()">✦ คำนวณเงินเกษียณ</button>
+    </div>
+
+    <!-- RESULTS PANEL -->
+    <div>
+      <div id="results" class="card">
+        <p class="card-title">ผลการคำนวณ</p>
+
+        <div class="metric highlight">
+          <div class="metric-label">เงินก้อนที่ต้องมีวันเกษียณ</div>
+          <div class="metric-value" id="r-total">—</div>
+          <div class="metric-sub">มูลค่าปัจจุบัน ณ วันเกษียณ</div>
+        </div>
+
+        <div class="metric-grid" style="margin-top:14px">
+          <div class="metric">
+            <div class="metric-label">ระยะเวลาเกษียณ</div>
+            <div class="metric-value" id="r-years">—</div>
+            <div class="metric-sub">ปี</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">ค่าใช้จ่ายปรับเงินเฟ้อ</div>
+            <div class="metric-value" id="r-adjusted">—</div>
+            <div class="metric-sub">บาท/เดือน</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">ต้องออมต่อเดือน</div>
+            <div class="metric-value" id="r-monthly">—</div>
+            <div class="metric-sub">บาท</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">ต้องออมต่อปี</div>
+            <div class="metric-value" id="r-yearly">—</div>
+            <div class="metric-sub">บาท</div>
+          </div>
+        </div>
+
+        <div class="progress-section">
+          <div class="progress-label">
+            <span>เงินออมปัจจุบัน vs เป้าหมาย</span>
+            <span id="r-pct-label">0%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill fill-gold" id="prog-current"></div>
+          </div>
+
+          <div class="progress-label">
+            <span>เวลาที่เหลือจนถึงเกษียณ</span>
+            <span id="r-time-label">—</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill fill-green" id="prog-time"></div>
+          </div>
+        </div>
+
+        <div id="advice-box" class="advice-box"></div>
+      </div>
+
+      <!-- placeholder before calc -->
+      <div id="placeholder" class="card" style="text-align:center;padding:48px 24px;color:var(--text-muted)">
+        <div style="font-size:48px;margin-bottom:16px;opacity:0.3">◈</div>
+        <p style="font-size:14px;line-height:1.6">กรอกข้อมูลด้านซ้าย<br>แล้วกดคำนวณเพื่อดูผลลัพธ์</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">* ผลการคำนวณเป็นการประมาณการเบื้องต้นเท่านั้น ควรปรึกษาที่ปรึกษาทางการเงินสำหรับแผนที่เหมาะสมกับสถานการณ์ของคุณ</div>
+
+<script>
+function fmt(n) {
+  return Math.round(n).toLocaleString('th-TH');
+}
+
+function updateSlider(el, labelId, unit) {
+  document.getElementById(labelId).textContent = el.value + unit;
+  const min = parseFloat(el.min), max = parseFloat(el.max), val = parseFloat(el.value);
+  const pct = ((val - min) / (max - min)) * 100;
+  el.style.setProperty('--pct', pct + '%');
+}
+
+// Init sliders
+document.querySelectorAll('input[type="range"]').forEach(el => {
+  const min = parseFloat(el.min), max = parseFloat(el.max), val = parseFloat(el.value);
+  const pct = ((val - min) / (max - min)) * 100;
+  el.style.setProperty('--pct', pct + '%');
+});
+
+function calculate() {
+  const currentAge = parseInt(document.getElementById('currentAge').value) || 30;
+  const retireAge = parseInt(document.getElementById('retireAge').value) || 60;
+  const lifeExpect = parseInt(document.getElementById('lifeExpect').value) || 85;
+  const monthlyExpense = parseFloat(document.getElementById('monthlyExpense').value) || 30000;
+  const currentSaving = parseFloat(document.getElementById('currentSaving').value) || 0;
+  const returnRate = parseFloat(document.getElementById('returnRate').value) / 100;
+  const inflationRate = parseFloat(document.getElementById('inflationRate').value) / 100;
+
+  if (retireAge <= currentAge) {
+    alert('อายุเกษียณต้องมากกว่าอายุปัจจุบัน');
+    return;
+  }
+  if (lifeExpect <= retireAge) {
+    alert('อายุขัยต้องมากกว่าอายุเกษียณ');
+    return;
+  }
+
+  const yearsToRetire = retireAge - currentAge;
+  const yearsInRetirement = lifeExpect - retireAge;
+
+  // Adjust monthly expense for inflation at retirement
+  const adjustedMonthly = monthlyExpense * Math.pow(1 + inflationRate, yearsToRetire);
+  const adjustedYearly = adjustedMonthly * 12;
+
+  // Real rate of return
+  const realRate = (1 + returnRate) / (1 + inflationRate) - 1;
+
+  // Total nest egg needed at retirement (PV of annuity, real terms)
+  let nestEgg;
+  if (realRate === 0) {
+    nestEgg = adjustedYearly * yearsInRetirement;
+  } else {
+    nestEgg = adjustedYearly * (1 - Math.pow(1 + realRate, -yearsInRetirement)) / realRate;
+  }
+
+  // Future value of current savings
+  const fvCurrentSaving = currentSaving * Math.pow(1 + returnRate, yearsToRetire);
+
+  // Additional needed
+  const additionalNeeded = Math.max(0, nestEgg - fvCurrentSaving);
+
+  // Monthly saving required (PMT)
+  let monthlyRequired;
+  const monthlyRate = returnRate / 12;
+  const months = yearsToRetire * 12;
+  if (monthlyRate === 0) {
+    monthlyRequired = additionalNeeded / months;
+  } else {
+    monthlyRequired = additionalNeeded * monthlyRate / (Math.pow(1 + monthlyRate, months) - 1);
+  }
+
+  // Percentage coverage
+  const pct = Math.min(100, (fvCurrentSaving / nestEgg) * 100);
+  const timePct = Math.min(100, ((currentAge - 20) / (retireAge - 20)) * 100);
+
+  // Update UI
+  document.getElementById('r-total').textContent = fmt(nestEgg) + ' ฿';
+  document.getElementById('r-years').textContent = yearsInRetirement;
+  document.getElementById('r-adjusted').textContent = fmt(adjustedMonthly);
+  document.getElementById('r-monthly').textContent = fmt(monthlyRequired);
+  document.getElementById('r-yearly').textContent = fmt(monthlyRequired * 12);
+  document.getElementById('r-pct-label').textContent = pct.toFixed(1) + '%';
+  document.getElementById('r-time-label').textContent = yearsToRetire + ' ปีที่เหลือ';
+
+  setTimeout(() => {
+    document.getElementById('prog-current').style.width = pct + '%';
+    document.getElementById('prog-time').style.width = timePct + '%';
+  }, 100);
+
+  // Advice
+  const adviceEl = document.getElementById('advice-box');
+  let advice = '';
+  let adviceClass = 'advice-box';
+
+  if (monthlyRequired <= 0) {
+    advice = '🎉 ยินดีด้วย! เงินออมที่มีอยู่เพียงพอสำหรับการเกษียณของคุณแล้ว คุณอาจพิจารณาเกษียณเร็วขึ้นหรือเพิ่มงบค่าใช้จ่ายหลังเกษียณได้';
+    adviceClass = 'advice-box';
+  } else if (monthlyRequired < monthlyExpense * 0.3) {
+    advice = `✦ คุณอยู่ในเส้นทางที่ดี! ควรออมเพิ่ม <strong>${fmt(monthlyRequired)} บาท/เดือน</strong> โดยพิจารณาลงทุนในกองทุน SSF/RMF เพื่อสิทธิประโยชน์ทางภาษีควบคู่กันไป`;
+  } else if (monthlyRequired < monthlyExpense * 0.6) {
+    advice = `⚠️ ต้องออม <strong>${fmt(monthlyRequired)} บาท/เดือน</strong> ซึ่งค่อนข้างสูง แนะนำให้ทบทวนค่าใช้จ่ายหลังเกษียณ หรือพิจารณาขยายอายุเกษียณออกไปเพื่อลดภาระการออม`;
+    adviceClass = 'advice-box warning';
+  } else {
+    advice = `🚨 ยอดออมที่ต้องการ <strong>${fmt(monthlyRequired)} บาท/เดือน</strong> สูงมาก ควรปรึกษานักวางแผนการเงิน พิจารณาเพิ่มแหล่งรายได้ หรือปรับเป้าหมายค่าใช้จ่ายหลังเกษียณ`;
+    adviceClass = 'advice-box warning';
+  }
+
+  adviceEl.className = adviceClass;
+  adviceEl.innerHTML = advice;
+
+  // Show results
+  document.getElementById('placeholder').style.display = 'none';
+  const resultsEl = document.getElementById('results');
+  resultsEl.style.display = 'block';
+  resultsEl.style.animation = 'none';
+  resultsEl.offsetHeight;
+  resultsEl.style.animation = 'fadeIn 0.4s ease';
+}
+</script>
+
+<style>
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+</style>
+</body>
+</html>
